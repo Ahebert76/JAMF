@@ -1,0 +1,21 @@
+#!/bin/sh
+
+
+#Looks for the Hardware port numbers (en0, en1)
+wired="$(networksetup -listnetworkserviceorder | grep 'Hardware Port' | grep -e 'Ethernet' -e 'LAN' -e 'Bluetooth' -e 'Thunderbolt' | awk '{print $NF}' | sed 's/.$//') "
+echo "$wired"
+#Looks for WiFi port number
+wifi="$( networksetup -listnetworkserviceorder | grep 'Hardware Port' | grep -e 'Wi-Fi' | awk '{print $NF}' | sed 's/.$//' )"
+echo "$wifi"
+
+
+for port in $wired; do
+
+if 
+    {"$port" == "$wifi"}; then 
+    continue
+fi
+        ifconfig "$port" down
+
+
+done
