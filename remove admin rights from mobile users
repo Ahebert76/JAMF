@@ -1,0 +1,63 @@
+#!/bin/bash
+
+# This script will remove admin privledges from any unauthorized admins
+
+useIcon=/System/Library/CoreServices/CoreTypes.bundle/Contents/Resources/AlertNoteIcon.icns
+JHELPER="/Library/Application Support/JAMF/bin/jamfHelper.app/Contents/MacOS/jamfHelper"
+################## Change user1, user2 etc to the users you want excluded####################
+adminsList=$(dscacheutil -q group -a name admin | grep -v ^name | grep -v ^pass | grep -v ^gid | awk '{gsub("users:|user1|user2|user3|user4", "");print}')
+
+
+if [ ! -f /Library/Application\ Support/JAMF/bin/removeadmin.log ]; then
+    touch /Library/Application\ Support/JAMF/bin/removeadmin.log
+    echo "[$(date)]: Created Log file" >> "/Library/Application Support/JAMF/bin/removeadmin.log"
+fi
+
+
+
+
+echo "[$(date)]: Checking for local admins" >> "/Library/Application Support/JAMF/bin/removeadmin.log"
+if [[ ! -z "$adminsList" ]];then
+
+  for uAdmin in $adminsList; do
+      /usr/sbin/dseditgroup -o edit -d "$uAdmin" -t user admin
+      echo "[$(date)]: Removing $uAdmin" >> "/Library/Application Support/JAMF/bin/removeadmin.log"
+      
+      sleep 2
+      
+      lpadminChk=$(dscacheutil -q group -a name _lpadmin | grep $uAdmin)
+      
+      while [ -z "$lpadminChk" ]; do
+      	echo "[$(date)]: Make $uAdmin a Printer Admin" >> "/Library/Application Support/JAMF/bin/removeadmin.log"
+        /usr/bin/dscl . append /Groups/_lpadmin GroupMembership $uAdmin 
+        lpadminChk=$(dscacheutil -q group -a name _lpadmin | grep $uAdmin)
+      done
+  done
+  
+  
+
+  if [[ "$currentUser" != "root" ]]; then
+
+      MESSAGE="Your account has been updated to meet new standards and your computer needs to reboot. Save any unsaved work and close any open programs and restart your computer as soon as it is convenient."
+
+      THEMESSAGE=$("$JHELPER" -windowType utility -title "Systems Admin" -heading "Account Update" -description "$MESSAGE" -button1 "OK" -defaultButton 1 -icon "$useIcon" -iconSize 64)
+
+      if [ "$THEMESSAGE" == "0" ]; then
+          #/sbin/reboot
+          exit 0
+      fi
+  else
+
+      /sbin/reboot
+      exit 0
+  fi
+  
+  
+  
+  
+else
+	echo "[$(date)]: None found" >> "/Library/Application Support/JAMF/bin/removeadmin.log"
+
+fi
+
+exit 0
