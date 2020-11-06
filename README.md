@@ -1,4 +1,5 @@
 
+# Jamf Helper Template
 
 # Turn off all but wireless
 
