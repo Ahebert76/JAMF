@@ -1,6 +1,6 @@
 
 
-# Tuen off all but wireless
+# Turn off all but wireless
 
 This will disable al network connections but wireless
 
