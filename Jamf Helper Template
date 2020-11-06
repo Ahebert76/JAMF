@@ -1,0 +1,92 @@
+#!/bin/sh
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+#
+# ABOUT THIS SCRIPT
+#
+#       Written by: Adam Hebert
+#       Created on: November 5, 2020
+#       Updated on: TBD
+#       Updated changes: 
+#       
+#
+#       Purpose: Template.
+#
+#       IMPORTANT: 
+#
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+#
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+#
+#######################################Variables###########################################
+
+useIcon=/Library/Application\ Support/JAMF/bin/KISDColorseal.png
+file=$(find /Library/Application\ Support/JAMF/bin/KISDColorseal.png)
+
+######################This looks to see if the local district Seal is installed and if it isnt it will install it#####################
+
+if [ ! -z "$file" ]
+then
+	icon=/Library/Application\ Support/JAMF/bin/KISDColorseal.png
+	#echo "found"
+else
+	/usr/local/jamf/bin/jamf policy -event kisdicons
+	#echo "installing icons"
+fi
+################# This is the message that you will want displayed in your Jamf helper Box#################
+MSG="Type your message here keep it between the quotes"
+
+#########If you need the Jamf helper to run a policy that the user allows you can use this portion##########
+
+answer=$(/Library/Application\ Support/JAMF/bin/jamfHelper.app/Contents/MacOS/jamfHelper \
+-windowType utility \
+-title "KISD Systems Admin" \
+-description "$MSG" -alignDescription center \
+-icon "$useIcon" \
+-iconSize 110 \
+-button1 "Defer" \
+-button2 "Update")
+########Button 1 by default will exit with code 0 and Button 2 will exit with code 2 ##########
+####################You can give the buttons what ever name you want###########################
+##################This will help you with the next if then statement###########################
+
+#####################This is what the button input is from the preceding Jamf Helper screen#################
+#######################It will put up a screen to tell the user what is going on############################
+if [ "$answer" == "0" ]; then
+	exit 0 
+elif [ "$answer" == "2" ]; then
+    /bin/echo "installing Office"
+    /Library/Application\ Support/JAMF/bin/jamfHelper.app/Contents/MacOS/jamfHelper \
+    -windowType utility -windowPosition centre \
+    -title "KISD Systems Admin" -alignHeading center \
+    -heading "what you want it to say " -alignDescription center \
+    -description "what is installing or happening" \
+    -lockHUD \
+    -icon "$useIcon" -iconSize 64 &
+#####################After the -event you put what policy you want to run#################################
+	/usr/local/jamf/bin/jamf policy -event 
+    /bin/echo "what is installing or happening"
+########################This closes the window when the policy is done running############################
+    ps axco pid,command | grep jamfHelper | awk '{ print $1; }' | xargs kill -9
+fi
+###############################This will tell the user that it is finished################################
+/Library/Application\ Support/JAMF/bin/jamfHelper.app/Contents/MacOS/jamfHelper \
+-windowType utility \
+-title "KISD Systems Admin" \
+-description "What has been completed" -alignDescription center \
+-icon "$useIcon" \
+-iconSize 64 \
+-button1 "Ok" \
+
+
+
+#########################If the install requires a restart with a countdown###############################
+/Library/Application\ Support/JAMF/bin/jamfHelper.app/Contents/MacOS/jamfHelper \
+ -windowType utility -windowPosition centre 
+ -title "KISD Systems Admin" -alignHeading left  
+ -description "Restarting in 10 minutes" 
+ -lockHUD 
+ -icon "$useIcon" -iconSize 64 &
+###########################the +10 is 10 minutes you can change this if  you like##########################
+shutdown -r +10
+
+exit 0
