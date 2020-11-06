@@ -1,10 +1,11 @@
 
 # Jamf Helper Template
 
+A templeate that lets the user know what is going on after input form them on a update needed or whatever you want to do
+
 # Turn off all but wireless
 
 This will disable al network connections but wireless
-
 
 # Remove admin rights from mobile users
 
